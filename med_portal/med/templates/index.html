@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Analysis</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <h1 class="text-center">
+            Retinal Disease Risk Assessment
+            <span id="badge" class="badge"></span>
+        </h1>
+    </header>
+    <div class="container mt-5">
+        <div class="row">
+            <!-- Upload Image Section -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Upload Image</h5>
+                        <div class="custom-file mb-3">
+                            <input type="file" class="custom-file-input" id="inputImage" onchange="updateLabel()">
+                            <label class="custom-file-label" for="inputImage">Choose file</label>
+                        </div>
+                        <button class="btn btn-primary" id="processBtn">Process Image</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Analysis Section -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Analysis</h5>
+                        <div id="analysisResult">
+                            <!-- Analysis result will be displayed here -->
+                        </div>
+                        <div class="progress mt-3" style="display: none;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                                style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Material Icons JS -->
+    <script src="https://fonts.googleapis.com/icon?family=Material+Icons" type="text/javascript"></script>
+    <!-- Your custom script -->
+    <script>
+        function updateLabel() {
+            // Get the input element and its label
+            const input = document.getElementById("inputImage");
+            const label = input.nextElementSibling;
+
+            // Update label text with selected file name
+            label.innerText = input.files[0] ? input.files[0].name : "Choose file";
+        }
+
+        $(document).ready(function () {
+            $("#processBtn").click(function (event) {
+                event.preventDefault(); // Prevent default browser behavior
+
+                processImage(); // Call the function to process the image
+            });
+        });
+
+        function processImage() {
+            // Show progress bar
+            $(".progress").show();
+            $(".progress-bar").css("width", "0%");
+
+            // Get the uploaded image
+            const input = document.getElementById("inputImage");
+            const file = input.files[0];
+            if (!file) {
+                alert("Please select an image file.");
+                return;
+            }
+
+            // Create a FormData object to send the file
+            const formData = new FormData();
+            formData.append("image", file);
+
+            // Make API call to process the image
+            $.ajax({
+                url: "YOUR_API_ENDPOINT",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                xhr: function () {
+                    var xhr = new window.XMLHttpRequest();
+                    // Upload progress
+                    xhr.upload.addEventListener("progress", function (evt) {
+                        if (evt.lengthComputable) {
+                            var percentComplete = (evt.loaded / evt.total) * 100;
+                            $(".progress-bar").css("width", percentComplete + "%");
+                        }
+                    }, false);
+                    return xhr;
+                },
+                success: function (response) {
+                    // Hide progress bar
+                    $(".progress").hide();
+                    // Display the analysis result
+                    document.getElementById("analysisResult").innerHTML = "<p>" + response + "</p>";
+
+                    // Update badge color based on response
+                    const badge = document.getElementById("badge");
+                    badge.innerText = "Good"; // Example response, replace with actual logic
+                    badge.classList.add(response === "Good" ? "badge-success" : "badge-danger");
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error:", error);
+                    // Hide progress bar
+                    $(".progress").hide();
+                    document.getElementById("analysisResult").innerHTML = "<p>An error occurred while processing the image.</p>";
+
+                    // Update badge color for error
+                    const badge = document.getElementById("badge");
+                    badge.innerText = "Error";
+                    badge.classList.add("badge-danger");
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
